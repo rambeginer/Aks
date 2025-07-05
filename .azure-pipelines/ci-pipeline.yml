@@ -1,0 +1,25 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  imageName: 'python-sample-app'
+  acrLoginServer: 'myacrramraja.azurecr.io'  # your ACR login server
+
+stages:
+- stage: BuildAndPush
+  jobs:
+  - job: DockerBuild
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      displayName: Build and Push Docker Image
+      inputs:
+        containerRegistry: 'acr-connection'
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          v1
