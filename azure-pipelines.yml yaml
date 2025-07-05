@@ -4,55 +4,42 @@ trigger:
       - main
 
 variables:
-  imageName: 'python-sample-app'
-  acrLoginServer: 'myacrunique1.azurecr.io'
-  tag: '$(Build.BuildId)'
+  acrName: 'myacrramraja'
+  imageName: 'rambeginerdoaks'
 
 stages:
-
 - stage: BuildAndPush
-  displayName: Build and Push to ACR
+  displayName: Build and Push Docker Image
   jobs:
-  - job: DockerBuildPush
+  - job: DockerBuild
+    displayName: Build & Push
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    - checkout: self
     - task: Docker@2
-      displayName: Build and Push Docker image
       inputs:
-        command: buildAndPush
-        containerRegistry: 'acr-connection'
+        command: 'buildAndPush'
         repository: '$(imageName)'
+        dockerfile: '**/Dockerfile'
+        containerRegistry: 'acr-connection'  # 👉 ACR service connection name
         tags: |
-          $(tag)
+          latest
 
-- stage: DeployToAKS
+- stage: Deploy
   displayName: Deploy to AKS
   dependsOn: BuildAndPush
   jobs:
-  - job: Deploy
+  - job: kubectlDeploy
+    displayName: Deploy to AKS Cluster
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - task: Kubernetes@1
-      displayName: Deploy Deployment.yaml
       inputs:
         connectionType: 'Azure Resource Manager'
-        azureSubscription: 'azure-connection'
-        azureResourceGroup: 'FP' # your resource group
-        kubernetesCluster: 'raja-aks-cluster' # your AKS cluster name
-        command: apply
-        useConfigurationFile: true
-        configuration: 'deployment.yaml'
-
-    - task: Kubernetes@1
-      displayName: Deploy Service.yaml
-      inputs:
-        connectionType: 'Azure Resource Manager'
-        azureSubscription: 'azure-connection'
+        azureSubscriptionEndpoint: 'aks-service-connection'  # 👉 Azure DevOps service connection name
         azureResourceGroup: 'FP'
-        kubernetesCluster: 'raja-aks-cluster'
-        command: apply
+        kubernetesCluster: 'aks-raja-cluster'
+        command: 'apply'
         useConfigurationFile: true
-        configuration: 'service.yaml'
+        configuration: 'deployment.yaml\nservice.yaml'
