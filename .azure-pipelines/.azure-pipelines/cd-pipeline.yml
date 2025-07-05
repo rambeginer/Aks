@@ -1,0 +1,20 @@
+trigger: none  # You can link this to CI using pipeline triggers
+
+stages:
+- stage: Deploy
+  jobs:
+  - job: DeployToAKS
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Kubernetes@1
+      displayName: Set AKS Image
+      inputs:
+        connectionType: 'Azure Resource Manager'
+        azureSubscription: 'acr-connection'
+        azureResourceGroup: 'FP'
+        kubernetesCluster: 'aks-raja-cluster'
+        namespace: 'default'
+        command: 'set'
+        arguments: > 
+          image deployment/python-app python-container=myacrramraja.azurecr.io/python-sample-app:v1
